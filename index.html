@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>FleetDocs Pro – MVP Demo</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-primary: #ffffff;
+      --bg-secondary: #f4f6f8;
+      --bg-tertiary: #eef0f3;
+      --text-primary: #111827;
+      --text-secondary: #6B7280;
+      --text-tertiary: #9CA3AF;
+      --border: rgba(0,0,0,0.10);
+      --border-md: rgba(0,0,0,0.16);
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --accent: #4FC3A1;
+      --navy: #1B2A3B;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg-primary: #1E2530;
+        --bg-secondary: #262E3A;
+        --bg-tertiary: #151C26;
+        --text-primary: #E8EDF2;
+        --text-secondary: #8A98A8;
+        --text-tertiary: #5A6878;
+        --border: rgba(255,255,255,0.08);
+        --border-md: rgba(255,255,255,0.14);
+        --navy: #0F1824;
+      }
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      background: #0D1117;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px 16px 40px;
+    }
+
+    .page-header {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    .page-title {
+      font-size: 13px;
+      font-weight: 500;
+      color: #4FC3A1;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .page-sub {
+      font-size: 12px;
+      color: #5A6878;
+    }
+
+    .phone-frame {
+      width: 375px;
+      background: #1B2A3B;
+      border-radius: 40px;
+      padding: 12px;
+      box-shadow: 0 40px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.05);
+      position: relative;
+    }
+
+    .phone-notch {
+      width: 100px;
+      height: 24px;
+      background: #0D1117;
+      border-radius: 0 0 14px 14px;
+      margin: 0 auto 8px;
+    }
+
+    .app {
+      background: var(--bg-tertiary);
+      border-radius: 28px;
+      overflow: hidden;
+      min-height: 720px;
+    }
+
+    /* Top bar */
+    .topbar {
+      background: #1B2A3B;
+      padding: 14px 16px 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .topbar-title { font-size: 15px; font-weight: 600; color: #E8EDF2; letter-spacing: 0.2px; }
+    .topbar-sub { font-size: 11px; color: #7A92A8; margin-top: 1px; }
+    .topbar-icon {
+      width: 32px; height: 32px;
+      background: rgba(79,195,161,0.15);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    /* Nav */
+    .nav {
+      display: flex;
+      background: #1B2A3B;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      padding: 0 4px;
+    }
+    .nav-item {
+      flex: 1; padding: 7px 4px;
+      text-align: center;
+      font-size: 9.5px;
+      color: #7A92A8;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: color 0.15s, border-color 0.15s;
+      user-select: none;
+    }
+    .nav-item.active { color: #4FC3A1; border-bottom-color: #4FC3A1; }
+    .nav-icon { font-size: 14px; display: block; margin-bottom: 2px; }
+
+    /* Screens */
+    .screen { display: none; padding: 12px; }
+    .screen.active { display: block; }
+
+    /* Components */
+    .alert-banner {
+      background: #fff8e1;
+      border: 0.5px solid #f6c344;
+      border-radius: var(--radius-sm);
+      padding: 10px 12px;
+      margin-bottom: 12px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .alert-dot { width: 8px; height: 8px; background: #E24B4A; border-radius: 50%; flex-shrink: 0; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100% { opacity:1 } 50% { opacity:0.4 } }
+    .alert-text { font-size: 12px; color: #7a5900; }
+
+    .stat-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-bottom: 12px; }
+    .stat-card {
+      background: var(--bg-primary);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 8px; text-align: center;
+    }
+    .stat-num { font-size: 22px; font-weight: 600; color: var(--text-primary); }
+    .stat-label { font-size: 10px; color: var(--text-secondary); margin-top: 2px; }
+    .stat-card.warn .stat-num { color: #BA7517; }
+    .stat-card.danger .stat-num { color: #A32D2D; }
+
+    .section-label {
+      font-size: 10.5px; font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase; letter-spacing: 0.7px;
+      margin-bottom: 8px; margin-top: 4px;
+    }
+
+    .badge {
+      display: inline-block; padding: 2px 8px;
+      border-radius: 10px; font-size: 10px; font-weight: 500;
+      flex-shrink: 0; margin-left: auto;
+    }
+    .badge.ok { background: #EAF3DE; color: #3B6D11; }
+    .badge.warn { background: #FAEEDA; color: #854F0B; }
+    .badge.danger { background: #FCEBEB; color: #A32D2D; }
+
+    .card {
+      background: var(--bg-primary);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 12px;
+      margin-bottom: 8px;
+    }
+    .card-header { display: flex; align-items: center; gap: 10px; }
+    .card-avatar {
+      width: 38px; height: 38px;
+      border-radius: 8px;
+      background: #1B2A3B;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; flex-shrink: 0;
+    }
+    .card-avatar.round { border-radius: 50%; font-size: 13px; font-weight: 600; }
+    .card-name { font-size: 14px; font-weight: 500; color: var(--text-primary); }
+    .card-sub { font-size: 11.5px; color: var(--text-secondary); }
+    .card-divider { border-top: 0.5px solid var(--border); margin-top: 8px; padding-top: 8px; }
+
+    .doc-chips { display: flex; gap: 5px; flex-wrap: wrap; }
+    .chip {
+      font-size: 10px; padding: 3px 8px;
+      border-radius: 10px;
+      border: 0.5px solid var(--border);
+      color: var(--text-secondary);
+      background: var(--bg-secondary);
+    }
+    .chip.expiring { border-color: #f6c344; background: #fff8e1; color: #7a5900; }
+    .chip.expired { border-color: #F7C1C1; background: #FCEBEB; color: #A32D2D; }
+
+    .doc-row { display: flex; align-items: center; justify-content: space-between; padding: 4px 0; }
+    .doc-name { font-size: 12px; color: var(--text-secondary); }
+    .doc-date { font-size: 12px; }
+    .doc-date.expired { color: #A32D2D; font-weight: 500; }
+    .doc-date.expiring { color: #854F0B; }
+    .doc-date.ok { color: #3B6D11; }
+
+    .alert-item {
+      background: var(--bg-primary);
+      border-radius: var(--radius-sm);
+      padding: 10px 12px;
+      margin-bottom: 6px;
+      display: flex; align-items: flex-start; gap: 10px;
+      border-left: 3px solid transparent;
+    }
+    .alert-item.high { border-left-color: #E24B4A; }
+    .alert-item.med { border-left-color: #EF9F27; }
+    .alert-title { font-size: 13px; font-weight: 500; color: var(--text-primary); }
+    .alert-desc { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
+    .alert-time { font-size: 10px; color: var(--text-tertiary); margin-top: 3px; }
+
+    .progress-bar { height: 4px; background: var(--bg-tertiary); border-radius: 2px; overflow: hidden; margin-top: 5px; }
+    .progress-fill { height: 100%; border-radius: 2px; background: #4FC3A1; }
+    .progress-fill.warn { background: #EF9F27; }
+    .progress-fill.danger { background: #E24B4A; }
+    .progress-labels { display: flex; justify-content: space-between; font-size: 10px; color: var(--text-secondary); margin-top: 3px; }
+
+    .tag-row { display: flex; gap: 6px; margin-bottom: 14px; }
+    .tag {
+      padding: 5px 10px; border-radius: 20px; font-size: 11px; font-weight: 500;
+    }
+    .tag.danger { background: #FCEBEB; color: #A32D2D; }
+    .tag.warn { background: #FAEEDA; color: #854F0B; }
+    .tag.ok { background: #EAF3DE; color: #3B6D11; }
+
+    .fab {
+      position: sticky; bottom: 12px; float: right;
+      width: 42px; height: 42px;
+      background: #1B2A3B; border: none; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; font-size: 22px; color: #4FC3A1;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.25);
+      transition: transform 0.15s;
+    }
+    .fab:hover { transform: scale(1.08); }
+    .fab:active { transform: scale(0.95); }
+
+    /* Footer CTA */
+    .footer-cta {
+      margin-top: 24px; text-align: center;
+    }
+    .cta-label { font-size: 12px; color: #5A6878; margin-bottom: 10px; }
+    .cta-btn {
+      display: inline-block;
+      background: #4FC3A1; color: #0D1117;
+      font-size: 13px; font-weight: 600;
+      padding: 10px 24px;
+      border-radius: 20px;
+      text-decoration: none;
+      letter-spacing: 0.2px;
+    }
+    .built-tag {
+      font-size: 11px; color: #3A4A5A;
+      margin-top: 14px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="page-header">
+    <div class="page-title">FleetDocs Pro</div>
+    <div class="page-sub">Interactive MVP Demo · Tap to explore</div>
+  </div>
+
+  <div class="phone-frame">
+    <div class="phone-notch"></div>
+    <div class="app">
+
+      <div class="topbar">
+        <div>
+          <div class="topbar-title">FleetDocs Pro</div>
+          <div class="topbar-sub">14 units · 22 drivers</div>
+        </div>
+        <div class="topbar-icon">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <circle cx="8" cy="5" r="2.5" stroke="#4FC3A1" stroke-width="1.2"/>
+            <path d="M3 13c0-2.76 2.24-5 5-5s5 2.24 5 5" stroke="#4FC3A1" stroke-width="1.2" stroke-linecap="round"/>
+          </svg>
+        </div>
+      </div>
+
+      <div class="nav">
+        <div class="nav-item active" onclick="switchTab('dashboard',this)"><span class="nav-icon">📊</span>Dashboard</div>
+        <div class="nav-item" onclick="switchTab('fleet',this)"><span class="nav-icon">🚛</span>Fleet</div>
+        <div class="nav-item" onclick="switchTab('drivers',this)"><span class="nav-icon">👤</span>Drivers</div>
+        <div class="nav-item" onclick="switchTab('alerts',this)"><span class="nav-icon">🔔</span>Alerts</div>
+        <div class="nav-item" onclick="switchTab('maint',this)"><span class="nav-icon">🔧</span>Service</div>
+      </div>
+
+      <!-- DASHBOARD -->
+      <div id="dashboard" class="screen active">
+        <div style="height:8px"></div>
+        <div class="alert-banner">
+          <div class="alert-dot"></div>
+          <div class="alert-text">3 documents expired · 5 expiring within 30 days</div>
+        </div>
+        <div class="stat-row">
+          <div class="stat-card"><div class="stat-num">14</div><div class="stat-label">Units</div></div>
+          <div class="stat-card warn"><div class="stat-num">5</div><div class="stat-label">Expiring</div></div>
+          <div class="stat-card danger"><div class="stat-num">3</div><div class="stat-label">Overdue</div></div>
+        </div>
+        <div class="section-label">Recent alerts</div>
+        <div class="alert-item high">
+          <div>
+            <div class="alert-title">Insurance expired – TRK-04</div>
+            <div class="alert-desc">Kenworth T680 · Policy ended May 12</div>
+            <div class="alert-time">Today, 8:02 AM</div>
+          </div>
+        </div>
+        <div class="alert-item high">
+          <div>
+            <div class="alert-title">CDL expired – James Whitmore</div>
+            <div class="alert-desc">Commercial Driver's License · Expired 3 days ago</div>
+            <div class="alert-time">Yesterday, 11:30 PM</div>
+          </div>
+        </div>
+        <div class="alert-item med">
+          <div>
+            <div class="alert-title">Registration due – TRK-09</div>
+            <div class="alert-desc">Mack Anthem · Expires in 18 days</div>
+            <div class="alert-time">Yesterday, 9:00 AM</div>
+          </div>
+        </div>
+        <div class="section-label" style="margin-top:10px">Upcoming service</div>
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start">
+            <div><div class="card-name" style="font-size:13px">Oil Change</div><div class="card-sub">TRK-02 · Peterbilt 389</div></div>
+            <span class="badge warn">Due soon</span>
+          </div>
+          <div style="margin-top:10px">
+            <div style="display:flex;justify-content:space-between;font-size:10.5px;color:var(--text-secondary)"><span>87,400 km</span><span>90,000 km due</span></div>
+            <div class="progress-bar"><div class="progress-fill warn" style="width:87%"></div></div>
+            <div class="progress-labels"><span>2,600 km remaining</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FLEET -->
+      <div id="fleet" class="screen">
+        <div style="height:8px"></div>
+        <div class="section-label">14 units registered</div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-avatar">🚛</div>
+            <div><div class="card-name">TRK-01 · Peterbilt 389</div><div class="card-sub">2019 · VIN: 1XPBD49X1JD452301</div></div>
+            <span class="badge ok">Active</span>
+          </div>
+          <div class="card-divider doc-chips">
+            <span class="chip">Registration ✓</span>
+            <span class="chip">Insurance ✓</span>
+            <span class="chip expiring">CVIP – 22d</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-avatar">🚛</div>
+            <div><div class="card-name">TRK-04 · Kenworth T680</div><div class="card-sub">2021 · VIN: 1XKYD49X1MJ224091</div></div>
+            <span class="badge danger">Action needed</span>
+          </div>
+          <div class="card-divider doc-chips">
+            <span class="chip">Registration ✓</span>
+            <span class="chip expired">Insurance – EXPIRED</span>
+            <span class="chip">CVIP ✓</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-avatar">🚜</div>
+            <div><div class="card-name">EQP-02 · CAT 336 Excavator</div><div class="card-sub">2020 · Unit ID: CAT-2020-EX01</div></div>
+            <span class="badge ok">Active</span>
+          </div>
+          <div class="card-divider doc-chips">
+            <span class="chip">Cert ✓</span>
+            <span class="chip expiring">Inspection – 11d</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-avatar">🚛</div>
+            <div><div class="card-name">TRK-09 · Mack Anthem</div><div class="card-sub">2022 · VIN: 1M1AW07Y3NM001733</div></div>
+            <span class="badge warn">Expiring soon</span>
+          </div>
+          <div class="card-divider doc-chips">
+            <span class="chip expiring">Registration – 18d</span>
+            <span class="chip">Insurance ✓</span>
+            <span class="chip">CVIP ✓</span>
+          </div>
+        </div>
+
+        <button class="fab">＋</button>
+      </div>
+
+      <!-- DRIVERS -->
+      <div id="drivers" class="screen">
+        <div style="height:8px"></div>
+        <div class="section-label">22 drivers on file</div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-avatar round" style="background:#E1F5EE;color:#0F6E56">RH</div>
+            <div><div class="card-name">Ray Halvorsen</div><div class="card-sub">TRK-01 · Class 1 · 12 yrs exp</div></div>
+            <span class="badge ok">Active</span>
+          </div>
+          <div class="card-divider">
+            <div class="doc-row"><span class="doc-name">CDL</span><span class="doc-date ok">Exp: Mar 2027</span></div>
+            <div class="doc-row"><span class="doc-name">Medical Card</span><span class="doc-date ok">Exp: Nov 2025</span></div>
+            <div class="doc-row"><span class="doc-name">Driver Abstract</span><span class="doc-date ok">Renewed Apr 2025</span></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-avatar round" style="background:#FCEBEB;color:#791F1F">JW</div>
+            <div><div class="card-name">James Whitmore</div><div class="card-sub">TRK-04 · Class 1 · 8 yrs exp</div></div>
+            <span class="badge danger">Action needed</span>
+          </div>
+          <div class="card-divider">
+            <div class="doc-row"><span class="doc-name">CDL</span><span class="doc-date expired">EXPIRED – May 20</span></div>
+            <div class="doc-row"><span class="doc-name">Medical Card</span><span class="doc-date ok">Exp: Sep 2025</span></div>
+            <div class="doc-row"><span class="doc-name">Driver Abstract</span><span class="doc-date expiring">Due for renewal</span></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-avatar round" style="background:#E6F1FB;color:#0C447C">SK</div>
+            <div><div class="card-name">Sandra Kowalski</div><div class="card-sub">TRK-09 · Class 1A · 5 yrs exp</div></div>
+            <span class="badge warn">Doc expiring</span>
+          </div>
+          <div class="card-divider">
+            <div class="doc-row"><span class="doc-name">CDL</span><span class="doc-date ok">Exp: Jan 2026</span></div>
+            <div class="doc-row"><span class="doc-name">Medical Card</span><span class="doc-date expiring">Exp: Jun 12 (20 days)</span></div>
+            <div class="doc-row"><span class="doc-name">H2S Alive</span><span class="doc-date ok">Exp: Aug 2025</span></div>
+          </div>
+        </div>
+
+        <button class="fab">＋</button>
+      </div>
+
+      <!-- ALERTS -->
+      <div id="alerts" class="screen">
+        <div style="height:8px"></div>
+        <div class="tag-row">
+          <div class="tag danger">3 Expired</div>
+          <div class="tag warn">5 Within 30d</div>
+          <div class="tag ok">46 Current</div>
+        </div>
+        <div class="section-label">Urgent – expired</div>
+        <div class="alert-item high">
+          <div><div class="alert-title">Insurance – TRK-04</div><div class="alert-desc">Kenworth T680 · Expired May 12 · Immediate action required</div></div>
+        </div>
+        <div class="alert-item high">
+          <div><div class="alert-title">CDL – James Whitmore</div><div class="alert-desc">Commercial Driver's License · Expired May 20</div></div>
+        </div>
+        <div class="alert-item high">
+          <div><div class="alert-title">CVIP – TRK-07</div><div class="alert-desc">Commercial Vehicle Inspection · Expired May 18</div></div>
+        </div>
+        <div class="section-label" style="margin-top:10px">Upcoming – within 30 days</div>
+        <div class="alert-item med">
+          <div><div class="alert-title">Registration – TRK-09</div><div class="alert-desc">Mack Anthem · Expires Jun 10 (18 days)</div></div>
+        </div>
+        <div class="alert-item med">
+          <div><div class="alert-title">Medical Card – Sandra Kowalski</div><div class="alert-desc">Driver medical card · Expires Jun 12 (20 days)</div></div>
+        </div>
+        <div class="alert-item med">
+          <div><div class="alert-title">CVIP – TRK-01</div><div class="alert-desc">Peterbilt 389 · Expires Jun 14 (22 days)</div></div>
+        </div>
+      </div>
+
+      <!-- SERVICE -->
+      <div id="maint" class="screen">
+        <div style="height:8px"></div>
+        <div class="section-label">Service schedule</div>
+
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start">
+            <div><div class="card-name" style="font-size:13px">Oil Change</div><div class="card-sub">TRK-02 · Peterbilt 389</div></div>
+            <span class="badge warn">Due soon</span>
+          </div>
+          <div style="margin-top:10px">
+            <div style="display:flex;justify-content:space-between;font-size:10.5px;color:var(--text-secondary)"><span>87,400 km current</span><span>90,000 km due</span></div>
+            <div class="progress-bar"><div class="progress-fill warn" style="width:87%"></div></div>
+            <div class="progress-labels"><span>Last: 78,000 km</span><span>2,600 km left</span></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start">
+            <div><div class="card-name" style="font-size:13px">Brake Inspection</div><div class="card-sub">TRK-04 · Kenworth T680</div></div>
+            <span class="badge danger">Overdue</span>
+          </div>
+          <div style="margin-top:10px">
+            <div style="display:flex;justify-content:space-between;font-size:10.5px;color:var(--text-secondary)"><span>112,500 km current</span><span>110,000 km due</span></div>
+            <div class="progress-bar"><div class="progress-fill danger" style="width:100%"></div></div>
+            <div class="progress-labels"><span>2,500 km overdue</span><span>Schedule now</span></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start">
+            <div><div class="card-name" style="font-size:13px">Tire Rotation</div><div class="card-sub">TRK-09 · Mack Anthem</div></div>
+            <span class="badge ok">Scheduled</span>
+          </div>
+          <div style="margin-top:10px">
+            <div style="display:flex;justify-content:space-between;font-size:10.5px;color:var(--text-secondary)"><span>54,200 km current</span><span>65,000 km due</span></div>
+            <div class="progress-bar"><div class="progress-fill" style="width:58%"></div></div>
+            <div class="progress-labels"><span>58% interval used</span><span>10,800 km left</span></div>
+          </div>
+        </div>
+
+        <div class="section-label" style="margin-top:4px">Recent completed</div>
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div><div class="card-name" style="font-size:13px">Full Service – TRK-01</div><div class="card-sub">May 8 · 85,000 km · $1,240</div></div>
+            <span class="badge ok">Done</span>
+          </div>
+        </div>
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div><div class="card-name" style="font-size:13px">Oil Change – EQP-02</div><div class="card-sub">Apr 29 · 1,800 hrs · $380</div></div>
+            <span class="badge ok">Done</span>
+          </div>
+        </div>
+
+        <button class="fab">＋</button>
+      </div>
+
+    </div><!-- .app -->
+  </div><!-- .phone-frame -->
+
+  <div class="footer-cta">
+    <div class="cta-label">Built as a bid demo · Full MVP deliverable in 6 weeks</div>
+    <div class="built-tag">FleetDocs Pro · MVP Demo by Vishwas H S</div>
+  </div>
+
+  <script>
+    function switchTab(id, el) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+      el.classList.add('active');
+    }
+  </script>
+</body>
+</html>
